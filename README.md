@@ -11,3 +11,6 @@ sudo apt install dsniff
 sudo git clone https://github.com/Arbolencio/NetPurge.git
 cd NetPurge
 ````
+````bash
+bash NetPurge.sh
+````
