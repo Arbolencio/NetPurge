@@ -15,4 +15,4 @@ cd NetPurge
 chmod +x
 ./NetPurge.sh
 ````
-
+https://raw.githubusercontent.com/Arbolencio/NetPurge/main/NetPurge.png
