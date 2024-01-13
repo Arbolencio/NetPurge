@@ -15,3 +15,4 @@ cd NetPurge
 chmod +x
 ./NetPurge.sh
 ````
+https://raw.githubusercontent.com/arbolencio/Netpurge/rama/ruta/al/asset
