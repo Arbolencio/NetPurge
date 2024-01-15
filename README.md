@@ -12,7 +12,7 @@ sudo git clone https://github.com/Arbolencio/NetPurge.git
 cd NetPurge
 ````
 ````bash
-chmod +x
+chmod +x NetPurge.sh
 ./NetPurge.sh
 ````
 ![screenshot](https://raw.githubusercontent.com/Arbolencio/NetPurge/main/NetPurge.png)
