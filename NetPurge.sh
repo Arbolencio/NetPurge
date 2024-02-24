@@ -49,3 +49,4 @@ puerta_enlace=$(echo $ip | sed 's/\([0-9]\+\)$/1/g')
 
 #comando 
 arpspoof -i "$interfaz" -t "$ip" "$puerta_enlace"
+echo -e "\033[0"
