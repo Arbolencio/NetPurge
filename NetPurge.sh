@@ -93,3 +93,4 @@ while true; do
         *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
     esac
     read -p "Press Enter to continue..." # Pause until user presses Enter
+    done
