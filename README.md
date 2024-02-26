@@ -44,5 +44,5 @@ When running NetPurge, you'll be prompted to enter the network interface you wan
 
 ## Screenshot
 
-![screenshot](https://raw.githubusercontent.com/Arbolencio/NetPurge/main/NetPurge.png)
+![screenshot](https://github.com/Arbolencio/NetPurge/blob/main/NetPurge.PNG?raw=true)
 
