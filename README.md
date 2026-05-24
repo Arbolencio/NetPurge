@@ -299,7 +299,7 @@ Distribuido bajo la licencia **GPL-3.0**. Ver el archivo [LICENSE](LICENSE) para
 
 <div align="center">
 
-**Hecho con 🔴 por [Arbolencio](https://github.com/Arbolencio)**
+**Hecho por [Arbolencio](https://github.com/Arbolencio)**
 
 *Para seguridad de redes locales*
 
